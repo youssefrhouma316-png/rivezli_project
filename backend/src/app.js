@@ -1,5 +1,6 @@
-import express from 'express';
-import cors from 'cors';
+import express from "express"
+import cors from "cors"
+import router from "./routes/auth.routes.js"
 
 const app = express();
 
@@ -11,5 +12,7 @@ app.get("/", (req, res) => {
     message: "Authentication API is running",
   });
 });
+
+app.use("/api/auth", router);
 
 export default app;
