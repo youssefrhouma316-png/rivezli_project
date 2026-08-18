@@ -1,4 +1,6 @@
 ../nodes_modules/
-
+nodes_modules/
 ../.env
-.postman/
+.env
+*.env
+../.postman/
