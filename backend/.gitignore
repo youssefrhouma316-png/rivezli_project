@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Environment files & Secrets
+.env
+*.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
