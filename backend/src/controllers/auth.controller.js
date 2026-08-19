@@ -133,5 +133,18 @@ const login = async (req, res) => {
   }
   
 };
+export const getProfile = async (req, res) => {
+    try {
+        res.status(200).json({
+            message: "Profil récupéré avec succès",
+            user: req.user
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Erreur serveur",
+            error: error.message
+        });
+    }
+};
 
 export { register, login };
