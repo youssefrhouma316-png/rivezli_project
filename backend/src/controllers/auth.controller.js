@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt"
 import User from "../models/userSchema.js";
 import jwt from 'jsonwebtoken';
+import PasswordReset from "../models/PasswordReset.js";
+import transporter from "../config/email.js";
 
 const register = async (req, res) => {
   try {
@@ -143,6 +145,66 @@ export const getProfile = async (req, res) => {
         res.status(500).json({
             message: "Erreur serveur",
             error: error.message
+        });
+    }
+};
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // Vérifier que l'email est fourni
+        if (!email) {
+            return res.status(400).json({
+                message: "Email obligatoire"
+            });
+        }
+
+        // Vérifier que l'utilisateur existe
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "Utilisateur introuvable"
+            });
+        }
+
+        // Générer un code à 6 chiffres
+        const code = Math.floor(
+            100000 + Math.random() * 900000
+        ).toString();
+
+        // Code valable pendant 10 minutes
+        const expiresAt = new Date(
+            Date.now() + 10 * 60 * 1000
+        );
+
+        // Supprimer un ancien code pour cet email
+        await PasswordReset.deleteMany({ email });
+
+        // Enregistrer le nouveau code
+        await PasswordReset.create({
+            email,
+            code,
+            expiresAt
+        });
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Réinitialisation de votre mot de passe",
+            text: `Votre code de réinitialisation est : ${code}. Ce code expire dans 10 minutes.`
+        });
+
+        return res.status(200).json({
+            message: "Code de réinitialisation généré avec succès"
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Erreur serveur"
         });
     }
 };
