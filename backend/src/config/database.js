@@ -4,12 +4,11 @@ dotenv.config();
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-
-    console.log("MongoDB connected successfully");
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    console.log(`✅ MongoDB connected successfully: ${conn.connection.host}`);
   } catch (error) {
-    console.error("MongoDB connection failed:", error.message);
-    process.exit(1);
+    console.error("⚠️ MongoDB connection warning:", error.message);
+    console.error("💡 Assurez-vous que le service MongoDB local est démarré (ou utilisez un URI MongoDB Atlas dans backend/.env).");
   }
 };
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { forgotPassword as requestForgotPassword } from "../services/auth.service.js";
 import Header from "../components/Header.jsx";
 
 function ForgotPassword() {
@@ -20,12 +20,9 @@ function ForgotPassword() {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/forgot-password`,
-        { email }
-      );
+      const data = await requestForgotPassword(email);
 
-      setMessage(response.data.message || "Code envoyé par email !");
+      setMessage(data.message || "Code envoyé par email !");
       localStorage.setItem("resetEmail", email);
 
       // Auto redirect to verify code page

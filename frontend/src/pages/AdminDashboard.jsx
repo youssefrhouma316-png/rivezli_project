@@ -13,8 +13,9 @@ function AdminDashboard() {
   useEffect(() => {
     const fetchAdminInfo = async () => {
       try {
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/users/admin-test`,
+          `${API_URL}/users/admin-test`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -23,9 +24,9 @@ function AdminDashboard() {
         );
         setAdminData(response.data);
 
-        // Mock/Fetch sample list for visualization if backend me is used
+        // Fetch active admin profile
         const profileRes = await axios.get(
-          `${import.meta.env.VITE_API_URL}/profile`,
+          `${API_URL}/auth/profile`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
