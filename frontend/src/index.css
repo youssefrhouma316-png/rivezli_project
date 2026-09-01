@@ -1,31 +1,29 @@
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-}
-
-form {
-  width: 400px;
-  margin: 50px auto;
-}
-
-form div {
-  margin-bottom: 15px;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-input,
-select {
-  width: 100%;
-  padding: 8px;
+* {
   box-sizing: border-box;
 }
 
-button {
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
   width: 100%;
-  padding: 10px;
-  cursor: pointer;
+  min-height: 100%;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #1f2937;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
 }
