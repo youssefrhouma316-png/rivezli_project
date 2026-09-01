@@ -31,6 +31,22 @@ const register = async (req, res) => {
       });
     }
 
+    // Validation du mot de passe (min 8 chars, 1 majuscule, 1 minuscule, 1 chiffre, 1 char spécial)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#_-])[A-Za-z\d@$!%*?&.#_-]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message: "Le mot de passe doit contenir au moins 8 caractères, dont une majuscule, une minuscule, un chiffre et un caractère spécial.",
+      });
+    }
+
+    // Validation du numéro de téléphone (au moins 8 chiffres)
+    const phoneRegex = /^[0-9\s+]{8,15}$/;
+    if (!phoneRegex.test(numeroTelephone)) {
+      return res.status(400).json({
+        message: "Le numéro de téléphone est invalide.",
+      });
+    }
+
     // 2. Vérification de l'email
     const existingUser = await User.findOne({ email });
 
@@ -77,7 +93,6 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-      
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -87,16 +102,6 @@ const login = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ email });
-
-    const token = jwt.sign(
-      {
-        id: existingUser.id,
-        email: existingUser.email,
-        role: existingUser.role
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
 
     if (!existingUser) {
       return res.status(404).json({
@@ -115,6 +120,16 @@ const login = async (req, res) => {
       });
     }
 
+    const token = jwt.sign(
+      {
+        id: existingUser._id,
+        email: existingUser.email,
+        role: existingUser.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
     return res.status(200).json({
       message: "Connexion réussie",
       user: {
@@ -124,7 +139,7 @@ const login = async (req, res) => {
         email: existingUser.email,
         role: existingUser.role,
       },
-      token: token,
+      token,
     });
   } catch (error) {
     console.error(error);
@@ -132,8 +147,7 @@ const login = async (req, res) => {
     return res.status(500).json({
       message: "Erreur serveur",
     });
-  }
-  
+  }  
 };
 export const getProfile = async (req, res) => {
     try {
@@ -189,15 +203,21 @@ export const forgotPassword = async (req, res) => {
             expiresAt
         });
 
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: "Réinitialisation de votre mot de passe",
-            text: `Votre code de réinitialisation est : ${code}. Ce code expire dans 10 minutes.`
-        });
+        try {
+            await transporter.sendMail({
+                from: process.env.EMAIL_USER || "noreply@rivezli.tn",
+                to: email,
+                subject: "Réinitialisation de votre mot de passe - Rivezli.tn",
+                text: `Votre code de réinitialisation est : ${code}. Ce code expire dans 10 minutes.`
+            });
+            console.log(`✉️ Email de réinitialisation envoyé avec succès à ${email}`);
+        } catch (emailError) {
+            console.error("⚠️ Impossible d'envoyer l'email via SMTP/Gmail (Erreur d'authentification) :", emailError.message);
+            console.log(`🔑 [MODE DEV/LOG] Code de réinitialisation généré pour ${email} : >>> ${code} <<<`);
+        }
 
         return res.status(200).json({
-            message: "Code de réinitialisation généré avec succès"
+            message: "Code de réinitialisation généré avec succès. (Consultez vos emails ou la console en mode dev)"
         });
 
     } catch (error) {
@@ -209,4 +229,73 @@ export const forgotPassword = async (req, res) => {
     }
 };
 
-export { register, login };
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, code, password } = req.body;
+
+    if (!email || !code || !password) {
+      return res.status(400).json({
+        message: "Tous les champs sont obligatoires",
+      });
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#_-])[A-Za-z\d@$!%*?&.#_-]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message: "Le mot de passe doit contenir au moins 8 caractères, dont une majuscule, une minuscule, un chiffre et un caractère spécial.",
+      });
+    }
+
+    const resetRequest = await PasswordReset.findOne({
+      email,
+      code,
+    });
+
+    if (!resetRequest) {
+      return res.status(400).json({
+        message: "Code de réinitialisation invalide",
+      });
+    }
+
+    if (resetRequest.expiresAt < new Date()) {
+      await PasswordReset.deleteOne({ _id: resetRequest._id });
+
+      return res.status(400).json({
+        message: "Le code de réinitialisation a expiré",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Utilisateur introuvable",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user.password = hashedPassword;
+
+    await user.save();
+
+    // Le code ne peut plus être réutilisé
+    await PasswordReset.deleteOne({
+      _id: resetRequest._id,
+    });
+
+    return res.status(200).json({
+      message: "Mot de passe réinitialisé avec succès",
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erreur serveur",
+    });
+  }
+};
+
+export { register, login};

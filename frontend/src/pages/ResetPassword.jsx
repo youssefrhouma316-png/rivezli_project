@@ -1,7 +1,10 @@
 import { useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { resetPassword } from "../services/auth.service.js";
+import Header from "../components/Header.jsx";
 
 function ResetPassword() {
+  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -13,7 +16,6 @@ function ResetPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setMessage("");
     setError("");
 
@@ -28,103 +30,73 @@ function ResetPassword() {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/reset-password`,
-        {
-          email,
-          code,
-          password,
-        }
-      );
+      const data = await resetPassword(email, code, password);
+      setMessage(data.message || "Mot de passe réinitialisé avec succès !");
 
-      setMessage(response.data.message);
-
-      // Nettoyage
       localStorage.removeItem("resetEmail");
       localStorage.removeItem("resetCode");
 
-    } catch (error) {
-      if (error.response) {
-        setError(error.response.data.message);
+      setTimeout(() => {
+        navigate("/login");
+      }, 1200);
+
+    } catch (err) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
       } else {
-        setError("Impossible de contacter le serveur.");
+        setError("Impossible de réinitialiser le mot de passe.");
       }
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
+    <>
+      <Header />
 
-        <h1>Rivezli</h1>
+      <main className="auth-page-wrapper center-wrapper">
+        <div className="reset-presentation-container">
+          
+          <h1 className="auth-main-title text-center">Mot de pass oublier</h1>
+          <p className="auth-main-subtitle text-center">
+            You received a code check you email
+          </p>
 
-        <h2>Nouveau mot de passe</h2>
+          {message && <div className="success-message">{message}</div>}
+          {error && <div className="error-message">{error}</div>}
 
-        <p className="auth-subtitle">
-          Choisissez votre nouveau mot de passe.
-        </p>
+          <form onSubmit={handleSubmit} className="reset-grid-form">
+            
+            <div className="form-group-field">
+              <label>New Mot de passe</label>
+              <input
+                type="password"
+                placeholder="Nom et prénom"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-        {message && (
-          <div className="success-message">
-            {message}
-          </div>
-        )}
+            <div className="form-group-field">
+              <label>Confirmer le mot de passe</label>
+              <input
+                type="password"
+                placeholder="Nom et prénom"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
 
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
+            <div className="form-group-field full-span text-center">
+              <button type="submit" className="btn-teal-pill btn-medium-pill">
+                Next
+              </button>
+            </div>
 
-        <form onSubmit={handleSubmit}>
+          </form>
 
-          <div className="form-group">
-            <label htmlFor="password">
-              Nouveau mot de passe
-            </label>
-
-            <input
-              id="password"
-              type="password"
-              placeholder="Nouveau mot de passe"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">
-              Confirmer le mot de passe
-            </label>
-
-            <input
-              id="confirmPassword"
-              type="password"
-              placeholder="Confirmer le mot de passe"
-              value={confirmPassword}
-              onChange={(e) =>
-                setConfirmPassword(e.target.value)
-              }
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="auth-button"
-          >
-            Modifier le mot de passe
-          </button>
-
-        </form>
-
-        <div className="auth-footer">
-          <a href="/login">
-            Retour à la connexion
-          </a>
         </div>
-
-      </div>
-    </div>
+      </main>
+    </>
   );
 }
 

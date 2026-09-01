@@ -1,12 +1,15 @@
 import { useState } from "react";
-import registerUser from "../services/auth.service.js";
+import { useNavigate } from "react-router-dom";
+import { registerUser } from "../services/auth.service.js";
+import Header from "../components/Header.jsx";
 
 function Register() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
-    nom: "",
-    prenom: "",
-    email: "",
+    nomPrenom: "",
     etablissementUniversitaire: "",
+    email: "",
     numeroTelephone: "",
     password: "",
     confirmPassword: "",
@@ -18,7 +21,6 @@ function Register() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData({
       ...formData,
       [name]: value,
@@ -27,14 +29,11 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setMessage("");
     setError("");
 
-    // Validation des champs
     if (
-      !formData.nom ||
-      !formData.prenom ||
+      !formData.nomPrenom ||
       !formData.email ||
       !formData.etablissementUniversitaire ||
       !formData.numeroTelephone ||
@@ -45,19 +44,21 @@ function Register() {
       return;
     }
 
-    // Vérification des mots de passe
     if (formData.password !== formData.confirmPassword) {
       setError("Les mots de passe ne correspondent pas.");
       return;
     }
 
-    // Données à envoyer au backend
+    // Split nom and prenom
+    const nameParts = formData.nomPrenom.trim().split(" ");
+    const nom = nameParts[0] || formData.nomPrenom;
+    const prenom = nameParts.slice(1).join(" ") || " ";
+
     const userData = {
-      nom: formData.nom,
-      prenom: formData.prenom,
+      nom,
+      prenom,
       email: formData.email,
-      etablissementUniversitaire:
-        formData.etablissementUniversitaire,
+      etablissementUniversitaire: formData.etablissementUniversitaire,
       numeroTelephone: formData.numeroTelephone,
       password: formData.password,
       role: formData.role,
@@ -65,141 +66,138 @@ function Register() {
 
     try {
       const data = await registerUser(userData);
+      setMessage(data.message || "Compte créé avec succès ! Redirection...");
 
-      setMessage(data.message);
+      setTimeout(() => {
+        navigate("/login");
+      }, 1200);
 
-      // Réinitialiser le formulaire
-      setFormData({
-        nom: "",
-        prenom: "",
-        email: "",
-        etablissementUniversitaire: "",
-        numeroTelephone: "",
-        password: "",
-        confirmPassword: "",
-        role: "student",
-      });
-    } catch (error) {
-      if (error.response) {
-        setError(error.response.data.message);
+    } catch (err) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
       } else {
-        setError("Impossible de contacter le serveur.");
+        setError("Impossible de contacter le serveur backend.");
       }
     }
   };
 
   return (
-    <div>
-      <h1>Créer un compte</h1>
+    <>
+      <Header />
 
-      {message && (
-        <p>
-          {message}
-        </p>
-      )}
+      <main className="auth-page-wrapper center-wrapper">
+        <div className="signup-presentation-container">
+          
+          <h1 className="auth-main-title text-center">Créer votre compte 👋</h1>
+          <p className="auth-main-subtitle text-center">
+            Créer un compte à Rivezli et commencer à apprendre!
+          </p>
 
-      {error && (
-        <p>
-          {error}
-        </p>
-      )}
+          {message && <div className="success-message">{message}</div>}
+          {error && <div className="error-message">{error}</div>}
 
-      <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="signup-grid-form">
+            
+            {/* Row 1 */}
+            <div className="form-group-field">
+              <label>Nom et prénom</label>
+              <input
+                type="text"
+                name="nomPrenom"
+                placeholder="Nom et prénom"
+                value={formData.nomPrenom}
+                onChange={handleChange}
+              />
+            </div>
 
-        <div>
-          <label>Nom</label>
-          <input
-            type="text"
-            name="nom"
-            value={formData.nom}
-            onChange={handleChange}
-          />
+            <div className="form-group-field">
+              <label>Etablissement Universitaire</label>
+              <input
+                type="text"
+                name="etablissementUniversitaire"
+                placeholder="Etablissement Universitaire"
+                value={formData.etablissementUniversitaire}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Row 2 */}
+            <div className="form-group-field">
+              <label>Adresse e-mail</label>
+              <input
+                type="email"
+                name="email"
+                placeholder="e-mail"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group-field">
+              <label>Num Tel</label>
+              <input
+                type="text"
+                name="numeroTelephone"
+                placeholder="Num tel"
+                value={formData.numeroTelephone}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Row 3 */}
+            <div className="form-group-field">
+              <label>Mot de passe</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Mot de passe"
+                value={formData.password}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group-field">
+              <label>Confirmer le mot de passe</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirmer le mot de passe"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Row 4: Role */}
+            <div className="form-group-field full-span">
+              <label>Rôle de l'utilisateur</label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="select-custom"
+              >
+                <option value="student">Étudiant</option>
+                <option value="admin">Administrateur</option>
+              </select>
+            </div>
+
+            {/* Submit button */}
+            <div className="form-group-field full-span text-center">
+              <button type="submit" className="btn-teal-pill btn-medium-pill">
+                Créer un compte
+              </button>
+            </div>
+
+          </form>
+
+          <div className="signup-footer-link text-center">
+            Vous avez un compte déjà?{" "}
+            <span onClick={() => navigate("/login")}>Se connecter</span>
+          </div>
+
         </div>
-
-        <div>
-          <label>Prénom</label>
-          <input
-            type="text"
-            name="prenom"
-            value={formData.prenom}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label>Établissement universitaire</label>
-          <input
-            type="text"
-            name="etablissementUniversitaire"
-            value={formData.etablissementUniversitaire}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label>Numéro de téléphone</label>
-          <input
-            type="text"
-            name="numeroTelephone"
-            value={formData.numeroTelephone}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label>Mot de passe</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label>Confirmer le mot de passe</label>
-          <input
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label>Rôle</label>
-
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-          >
-            <option value="student">
-              Étudiant
-            </option>
-
-            <option value="admin">
-              Administrateur
-            </option>
-          </select>
-        </div>
-
-        <button type="submit">
-          S'inscrire
-        </button>
-
-      </form>
-    </div>
+      </main>
+    </>
   );
 }
 

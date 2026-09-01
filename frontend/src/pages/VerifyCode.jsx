@@ -1,109 +1,115 @@
-import { useState } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Header from "../components/Header.jsx";
 
 function VerifyCode() {
-  const [code, setCode] = useState("");
-  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+  const [digits, setDigits] = useState(["", "", "", "", "", ""]);
+  const [timer, setTimer] = useState(50);
   const [error, setError] = useState("");
 
   const email = localStorage.getItem("resetEmail");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    const countdown = setInterval(() => {
+      setTimer((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(countdown);
+  }, []);
 
-    setMessage("");
-    setError("");
+  const handleDigitChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
 
-    if (!code) {
-      setError("Veuillez entrer le code.");
-      return;
-    }
+    const newDigits = [...digits];
+    newDigits[index] = value.slice(-1);
+    setDigits(newDigits);
 
-    if (code.length !== 6) {
-      setError("Le code doit contenir 6 chiffres.");
-      return;
-    }
-
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/verify-reset-code`,
-        {
-          email,
-          code,
-        }
-      );
-
-      setMessage(response.data.message);
-
-      // Le code est valide
-      localStorage.setItem("resetCode", code);
-
-      window.location.href = "/reset-password";
-
-    } catch (error) {
-      if (error.response) {
-        setError(error.response.data.message);
-      } else {
-        setError("Impossible de contacter le serveur.");
-      }
+    // Auto focus next input
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-input-${index + 1}`);
+      if (nextInput) nextInput.focus();
     }
   };
 
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !digits[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-input-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError("");
+
+    const fullCode = digits.join("");
+
+    if (fullCode.length !== 6) {
+      setError("Le code doit comporter 6 chiffres.");
+      return;
+    }
+
+    localStorage.setItem("resetCode", fullCode);
+    navigate("/reset-password");
+  };
+
   return (
-    <div className="auth-page">
-      <div className="auth-card">
+    <>
+      <Header />
 
-        <h1>Rivezli</h1>
+      <main className="auth-page-wrapper center-wrapper">
+        <div className="reset-presentation-container">
+          
+          <h1 className="auth-main-title text-center">Mot de pass oublier</h1>
+          <p className="auth-main-subtitle text-center">
+            You received a code check you email ({email || "votre email"})
+          </p>
 
-        <h2>Vérification</h2>
+          {error && <div className="error-message">{error}</div>}
 
-        <p className="auth-subtitle">
-          Entrez le code à 6 chiffres reçu par email.
-        </p>
+          <form onSubmit={handleSubmit} className="otp-form-layout">
+            
+            {/* 6 OTP Circle Input Boxes */}
+            <div className="otp-inputs-row">
+              {digits.map((digit, idx) => (
+                <input
+                  key={idx}
+                  id={`otp-input-${idx}`}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength="1"
+                  className="otp-circle-box"
+                  value={digit}
+                  onChange={(e) => handleDigitChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(idx, e)}
+                />
+              ))}
+            </div>
 
-        {message && (
-          <div className="success-message">
-            {message}
-          </div>
-        )}
+            {/* Timer & Resend */}
+            <div className="timer-resend-row">
+              <span>00:{timer < 10 ? `0${timer}` : timer}</span>
+              <button 
+                type="button" 
+                className="btn-resend-link"
+                onClick={() => setTimer(50)}
+              >
+                Resend?
+              </button>
+            </div>
 
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
+            {/* Next Button */}
+            <div className="text-center">
+              <button type="submit" className="btn-teal-pill btn-medium-pill">
+                Next
+              </button>
+            </div>
 
-        <form onSubmit={handleSubmit}>
+          </form>
 
-          <div className="form-group">
-            <label htmlFor="code">
-              Code de vérification
-            </label>
-
-            <input
-              id="code"
-              type="text"
-              inputMode="numeric"
-              maxLength="6"
-              placeholder="000000"
-              value={code}
-              onChange={(e) =>
-                setCode(e.target.value.replace(/\D/g, ""))
-              }
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="auth-button"
-          >
-            Vérifier le code
-          </button>
-
-        </form>
-
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }
 
