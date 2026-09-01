@@ -31,6 +31,22 @@ const register = async (req, res) => {
       });
     }
 
+    // Validation du mot de passe (min 8 chars, 1 majuscule, 1 minuscule, 1 chiffre, 1 char spécial)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#_-])[A-Za-z\d@$!%*?&.#_-]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message: "Le mot de passe doit contenir au moins 8 caractères, dont une majuscule, une minuscule, un chiffre et un caractère spécial.",
+      });
+    }
+
+    // Validation du numéro de téléphone (au moins 8 chiffres)
+    const phoneRegex = /^[0-9\s+]{8,15}$/;
+    if (!phoneRegex.test(numeroTelephone)) {
+      return res.status(400).json({
+        message: "Le numéro de téléphone est invalide.",
+      });
+    }
+
     // 2. Vérification de l'email
     const existingUser = await User.findOne({ email });
 
@@ -214,6 +230,13 @@ export const resetPassword = async (req, res) => {
     if (!email || !code || !password) {
       return res.status(400).json({
         message: "Tous les champs sont obligatoires",
+      });
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#_-])[A-Za-z\d@$!%*?&.#_-]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message: "Le mot de passe doit contenir au moins 8 caractères, dont une majuscule, une minuscule, un chiffre et un caractère spécial.",
       });
     }
 

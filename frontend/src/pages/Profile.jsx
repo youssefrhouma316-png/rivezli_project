@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Navbar from "../components/Navbar.jsx";
+import Header from "../components/Header.jsx";
 
 function Profile() {
   const navigate = useNavigate();
@@ -30,13 +30,10 @@ function Profile() {
 
         setUser(response.data.user);
 
-      } catch (error) {
-        console.error(error);
-
-        if (error.response?.status === 401) {
+      } catch (err) {
+        if (err.response?.status === 401) {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
-
           navigate("/login");
         } else {
           setError("Impossible de récupérer le profil.");
@@ -49,19 +46,14 @@ function Profile() {
 
   return (
     <>
-      <Navbar />
+      <Header />
 
       <main className="profile-page">
-
         <div className="profile-card">
 
-          <h1>Mon profil</h1>
+          <h1 className="auth-main-title">Mon profil Rivezli</h1>
 
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
-          )}
+          {error && <div className="error-message">{error}</div>}
 
           {user && (
             <div className="profile-info">
@@ -82,29 +74,24 @@ function Profile() {
               </div>
 
               <div className="profile-item">
-                <span>Établissement</span>
-                <strong>
-                  {user.etablissementUniversitaire || "-"}
-                </strong>
+                <span>Établissement Universitaire</span>
+                <strong>{user.etablissementUniversitaire || "-"}</strong>
               </div>
 
               <div className="profile-item">
                 <span>Téléphone</span>
-                <strong>
-                  {user.numeroTelephone || "-"}
-                </strong>
+                <strong>{user.numeroTelephone || "-"}</strong>
               </div>
 
               <div className="profile-item">
                 <span>Rôle</span>
-                <strong>{user.role}</strong>
+                <strong className="text-capitalize">{user.role}</strong>
               </div>
 
             </div>
           )}
 
         </div>
-
       </main>
     </>
   );

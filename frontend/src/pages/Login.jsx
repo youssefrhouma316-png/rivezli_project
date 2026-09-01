@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import Header from "../components/Header.jsx";
 
 function Login() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -19,12 +22,11 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setMessage("");
     setError("");
 
     if (!formData.email || !formData.password) {
-      setError("Email et mot de passe sont obligatoires.");
+      setError("Veuillez remplir l'adresse email et le mot de passe.");
       return;
     }
 
@@ -36,100 +38,119 @@ function Login() {
 
       setMessage(response.data.message);
 
-      // Sauvegarder le JWT
+      // Sauvegarder le JWT et l'utilisateur
       localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
 
-      // Sauvegarder les informations utilisateur
-      localStorage.setItem(
-        "user",
-        JSON.stringify(response.data.user)
-      );
+      // Redirection automatique selon le rôle
+      setTimeout(() => {
+        if (response.data.user?.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
+      }, 500);
 
-      console.log("Connexion réussie :", response.data);
-
-    } catch (error) {
-      if (error.response) {
-        setError(error.response.data.message);
+    } catch (err) {
+      if (err.response) {
+        setError(err.response.data.message);
       } else {
-        setError("Impossible de contacter le serveur.");
+        setError("Impossible de contacter le serveur backend.");
       }
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
+    <>
+      <Header />
 
-        <h1>Rivezli</h1>
+      <main className="auth-page-wrapper">
+        <div className="login-presentation-container">
+          
+          {/* LEFT SIDE: LOGIN FORM */}
+          <div className="login-form-side">
+            
+            <h1 className="auth-main-title">Se connecter 👋</h1>
+            <p className="auth-main-subtitle">
+              Créer un compte à Rivezli et commencer à apprendre!
+            </p>
 
-        <h2>Connexion</h2>
+            {message && <div className="success-message">{message}</div>}
+            {error && <div className="error-message">{error}</div>}
 
-        <p className="auth-subtitle">
-          Connectez-vous à votre compte
-        </p>
+            <form onSubmit={handleSubmit} className="auth-form-layout">
+              
+              <div className="form-group-field">
+                <label>Nom et prénom</label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Nom et prénom"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
 
-        {message && (
-          <div className="success-message">
-            {message}
+              <div className="form-group-field">
+                <label>Confirmer le mot de passe</label>
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Nom et prénom"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="forgot-password-link">
+                <span onClick={() => navigate("/forgot-password")}>
+                  Forget Password ?
+                </span>
+              </div>
+
+              <button type="submit" className="btn-teal-pill btn-full">
+                Se Connecter
+              </button>
+
+            </form>
+
+            <div className="auth-divider-text">
+              <span>Pas De Comte ?</span>
+            </div>
+
+            <button
+              type="button"
+              className="btn-outline-teal-pill btn-full"
+              onClick={() => navigate("/register")}
+            >
+              Créer un compte
+            </button>
+
           </div>
-        )}
 
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
+          {/* RIGHT SIDE: DARK TEAL PROMO CARD */}
+          <div className="login-promo-side">
+            <div className="promo-card-content">
+              
+              <p className="promo-description">
+                Débloquez votre avenir avec notre plateforme et démarrez votre carrière avec succès. Commencez à façonner votre chemin vers la réussite dès aujourd'hui !
+              </p>
 
-        <form onSubmit={handleSubmit}>
+              <h2 className="promo-heading">
+                Débloquez le succès<br />avec notre plateforme
+              </h2>
+              
+              <div className="promo-underline"></div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
+            </div>
 
-            <input
-              id="email"
-              type="email"
-              name="email"
-              placeholder="Votre adresse email"
-              value={formData.email}
-              onChange={handleChange}
-            />
+            {/* Subtle background curved overlay */}
+            <div className="promo-bg-wave"></div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Mot de passe</label>
-
-            <input
-              id="password"
-              type="password"
-              name="password"
-              placeholder="Votre mot de passe"
-              value={formData.password}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="forgot-password">
-            <a href="/forgot-password">
-              Mot de passe oublié ?
-            </a>
-          </div>
-
-          <button type="submit" className="auth-button">
-            Se connecter
-          </button>
-
-        </form>
-
-        <div className="auth-footer">
-          <span>Vous n'avez pas encore de compte ?</span>
-
-          <a href="/register">
-            Créer un compte
-          </a>
         </div>
-
-      </div>
-    </div>
+      </main>
+    </>
   );
 }
 

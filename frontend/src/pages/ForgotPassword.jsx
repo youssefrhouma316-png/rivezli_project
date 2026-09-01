@@ -1,20 +1,21 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import Header from "../components/Header.jsx";
 
 function ForgotPassword() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setMessage("");
     setError("");
 
     if (!email) {
-      setError("Veuillez entrer votre adresse email.");
+      setError("Veuillez saisir votre adresse email.");
       return;
     }
 
@@ -24,14 +25,17 @@ function ForgotPassword() {
         { email }
       );
 
-      setMessage(response.data.message);
-
-      // On garde l'email pour l'étape OTP
+      setMessage(response.data.message || "Code envoyé par email !");
       localStorage.setItem("resetEmail", email);
 
-    } catch (error) {
-      if (error.response) {
-        setError(error.response.data.message);
+      // Auto redirect to verify code page
+      setTimeout(() => {
+        navigate("/verify-code");
+      }, 1000);
+
+    } catch (err) {
+      if (err.response) {
+        setError(err.response.data.message);
       } else {
         setError("Impossible de contacter le serveur.");
       }
@@ -39,62 +43,47 @@ function ForgotPassword() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
+    <>
+      <Header />
 
-        <h1>Rivezli</h1>
+      <main className="auth-page-wrapper center-wrapper">
+        <div className="reset-presentation-container">
+          
+          <h1 className="auth-main-title text-center">Mot de pass oublier</h1>
+          <p className="auth-main-subtitle text-center">
+            You received a code check you email
+          </p>
 
-        <h2>Mot de passe oublié</h2>
+          {message && <div className="success-message">{message}</div>}
+          {error && <div className="error-message">{error}</div>}
 
-        <p className="auth-subtitle">
-          Entrez votre email pour recevoir un code de réinitialisation.
-        </p>
+          <form onSubmit={handleSubmit} className="reset-form-single">
+            
+            <div className="form-group-field">
+              <label>Adresse e-mail</label>
+              <input
+                type="email"
+                placeholder="Votre adresse e-mail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-        {message && (
-          <div className="success-message">
-            {message}
+            <div className="text-center">
+              <button type="submit" className="btn-teal-pill btn-medium-pill">
+                Envoyer le code
+              </button>
+            </div>
+
+          </form>
+
+          <div className="signup-footer-link text-center">
+            <span onClick={() => navigate("/login")}>← Retour à la connexion</span>
           </div>
-        )}
 
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-
-          <div className="form-group">
-            <label htmlFor="email">
-              Adresse email
-            </label>
-
-            <input
-              id="email"
-              type="email"
-              placeholder="Votre adresse email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="auth-button"
-          >
-            Envoyer le code
-          </button>
-
-        </form>
-
-        <div className="auth-footer">
-          <a href="/login">
-            ← Retour à la connexion
-          </a>
         </div>
-
-      </div>
-    </div>
+      </main>
+    </>
   );
 }
 

@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar.jsx";
+import Header from "../components/Header.jsx";
 
 function Dashboard() {
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
     if (!token) {
@@ -20,61 +20,59 @@ function Dashboard() {
 
   return (
     <>
-      <Navbar />
+      <Header />
 
       <main className="dashboard-page">
+        <div className="dashboard-main-container">
 
-        <section className="dashboard-header">
+          <section className="dashboard-header">
+            <div>
+              <span className="student-badge">ESPACE ÉTUDIANT</span>
+              <h1>Bienvenue{user?.prenom ? `, ${user.prenom}` : ""} 👋</h1>
+              <p>
+                Retrouvez toutes les ressources de cours et informations de votre compte Rivezli.tn.
+              </p>
+            </div>
+          </section>
 
-          <div>
-            <h1>
-              Bienvenue{user?.prenom ? `, ${user.prenom}` : ""} 👋
-            </h1>
+          <section className="dashboard-cards">
 
-            <p>
-              Retrouvez toutes les informations de votre espace Rivezli.
-            </p>
-          </div>
+            <div className="dashboard-card">
+              <div className="card-icon">👤</div>
+              <h3>Mes informations</h3>
+              <p>
+                Consultez et mettez à jour vos données personnelles et votre établissement.
+              </p>
+              <button className="btn-card-teal" onClick={() => navigate("/profile")}>
+                Voir mon profil
+              </button>
+            </div>
 
-        </section>
+            <div className="dashboard-card">
+              <div className="card-icon">📚</div>
+              <h3>Mes Cours & Formations</h3>
+              <p>
+                Accédez à la liste complète de vos cours et supports pédagogiques.
+              </p>
+              <button className="btn-card-teal">
+                Consulter les cours
+              </button>
+            </div>
 
-        <section className="dashboard-cards">
+            <div className="dashboard-card">
+              <div className="card-icon">📊</div>
+              <h3>Mon Activité & Progression</h3>
+              <p>
+                Suivez votre progression et vos statistiques d'apprentissage en temps réel.
+              </p>
+              <button className="btn-card-teal">
+                Voir l'activité
+              </button>
+            </div>
 
-          <div className="dashboard-card">
-            <h3>Mes informations</h3>
-            <p>
-              Consultez et gérez vos informations personnelles.
-            </p>
+          </section>
 
-            <button onClick={() => navigate("/profile")}>
-              Voir mon profil
-            </button>
-          </div>
-
-          <div className="dashboard-card">
-            <h3>Mon espace</h3>
-            <p>
-              Accédez aux fonctionnalités disponibles sur Rivezli.
-            </p>
-
-            <button>
-              Consulter
-            </button>
-          </div>
-
-          <div className="dashboard-card">
-            <h3>Activité</h3>
-            <p>
-              Retrouvez prochainement votre activité sur la plateforme.
-            </p>
-
-            <button>
-              Voir l'activité
-            </button>
-          </div>
-
-        </section>
-
+        </div>
       </main>
     </>
   );

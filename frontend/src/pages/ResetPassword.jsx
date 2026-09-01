@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { resetPassword } from "../services/auth.service.js";
+import Header from "../components/Header.jsx";
 
 function ResetPassword() {
+  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -13,7 +16,6 @@ function ResetPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setMessage("");
     setError("");
 
@@ -28,91 +30,73 @@ function ResetPassword() {
     }
 
     try {
-      const data = await resetPassword(
-        email,
-        code,
-        password
-      );
-
-      setMessage(data.message);
+      const data = await resetPassword(email, code, password);
+      setMessage(data.message || "Mot de passe réinitialisé avec succès !");
 
       localStorage.removeItem("resetEmail");
       localStorage.removeItem("resetCode");
 
       setTimeout(() => {
-        window.location.href = "/login";
-      }, 1500);
+        navigate("/login");
+      }, 1200);
 
-    } catch (error) {
-      if (error.response) {
-        setError(error.response.data.message);
+    } catch (err) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
       } else {
-        setError("Impossible de contacter le serveur.");
+        setError("Impossible de réinitialiser le mot de passe.");
       }
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
+    <>
+      <Header />
 
-        <h1>Rivezli</h1>
+      <main className="auth-page-wrapper center-wrapper">
+        <div className="reset-presentation-container">
+          
+          <h1 className="auth-main-title text-center">Mot de pass oublier</h1>
+          <p className="auth-main-subtitle text-center">
+            You received a code check you email
+          </p>
 
-        <h2>Nouveau mot de passe</h2>
+          {message && <div className="success-message">{message}</div>}
+          {error && <div className="error-message">{error}</div>}
 
-        <p className="auth-subtitle">
-          Entrez votre nouveau mot de passe.
-        </p>
+          <form onSubmit={handleSubmit} className="reset-grid-form">
+            
+            <div className="form-group-field">
+              <label>New Mot de passe</label>
+              <input
+                type="password"
+                placeholder="Nom et prénom"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-        {message && (
-          <div className="success-message">
-            {message}
-          </div>
-        )}
+            <div className="form-group-field">
+              <label>Confirmer le mot de passe</label>
+              <input
+                type="password"
+                placeholder="Nom et prénom"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
 
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
+            <div className="form-group-field full-span text-center">
+              <button type="submit" className="btn-teal-pill btn-medium-pill">
+                Next
+              </button>
+            </div>
 
-        <form onSubmit={handleSubmit}>
+          </form>
 
-          <div className="form-group">
-            <label>Nouveau mot de passe</label>
-
-            <input
-              type="password"
-              value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Confirmer le mot de passe</label>
-
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) =>
-                setConfirmPassword(e.target.value)
-              }
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="auth-button"
-          >
-            Réinitialiser
-          </button>
-
-        </form>
-
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }
 
