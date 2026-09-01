@@ -77,7 +77,6 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-      
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -87,16 +86,6 @@ const login = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ email });
-
-    const token = jwt.sign(
-      {
-        id: existingUser.id,
-        email: existingUser.email,
-        role: existingUser.role
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
 
     if (!existingUser) {
       return res.status(404).json({
@@ -115,6 +104,16 @@ const login = async (req, res) => {
       });
     }
 
+    const token = jwt.sign(
+      {
+        id: existingUser._id,
+        email: existingUser.email,
+        role: existingUser.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
     return res.status(200).json({
       message: "Connexion réussie",
       user: {
@@ -124,7 +123,7 @@ const login = async (req, res) => {
         email: existingUser.email,
         role: existingUser.role,
       },
-      token: token,
+      token,
     });
   } catch (error) {
     console.error(error);
@@ -132,8 +131,7 @@ const login = async (req, res) => {
     return res.status(500).json({
       message: "Erreur serveur",
     });
-  }
-  
+  }  
 };
 export const getProfile = async (req, res) => {
     try {
@@ -209,4 +207,66 @@ export const forgotPassword = async (req, res) => {
     }
 };
 
-export { register, login };
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, code, password } = req.body;
+
+    if (!email || !code || !password) {
+      return res.status(400).json({
+        message: "Tous les champs sont obligatoires",
+      });
+    }
+
+    const resetRequest = await PasswordReset.findOne({
+      email,
+      code,
+    });
+
+    if (!resetRequest) {
+      return res.status(400).json({
+        message: "Code de réinitialisation invalide",
+      });
+    }
+
+    if (resetRequest.expiresAt < new Date()) {
+      await PasswordReset.deleteOne({ _id: resetRequest._id });
+
+      return res.status(400).json({
+        message: "Le code de réinitialisation a expiré",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Utilisateur introuvable",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user.password = hashedPassword;
+
+    await user.save();
+
+    // Le code ne peut plus être réutilisé
+    await PasswordReset.deleteOne({
+      _id: resetRequest._id,
+    });
+
+    return res.status(200).json({
+      message: "Mot de passe réinitialisé avec succès",
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erreur serveur",
+    });
+  }
+};
+
+export { register, login};

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import { resetPassword } from "../services/auth.service.js";
 
 function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -28,20 +28,20 @@ function ResetPassword() {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/reset-password`,
-        {
-          email,
-          code,
-          password,
-        }
+      const data = await resetPassword(
+        email,
+        code,
+        password
       );
 
-      setMessage(response.data.message);
+      setMessage(data.message);
 
-      // Nettoyage
       localStorage.removeItem("resetEmail");
       localStorage.removeItem("resetCode");
+
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1500);
 
     } catch (error) {
       if (error.response) {
@@ -61,7 +61,7 @@ function ResetPassword() {
         <h2>Nouveau mot de passe</h2>
 
         <p className="auth-subtitle">
-          Choisissez votre nouveau mot de passe.
+          Entrez votre nouveau mot de passe.
         </p>
 
         {message && (
@@ -79,28 +79,22 @@ function ResetPassword() {
         <form onSubmit={handleSubmit}>
 
           <div className="form-group">
-            <label htmlFor="password">
-              Nouveau mot de passe
-            </label>
+            <label>Nouveau mot de passe</label>
 
             <input
-              id="password"
               type="password"
-              placeholder="Nouveau mot de passe"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword">
-              Confirmer le mot de passe
-            </label>
+            <label>Confirmer le mot de passe</label>
 
             <input
-              id="confirmPassword"
               type="password"
-              placeholder="Confirmer le mot de passe"
               value={confirmPassword}
               onChange={(e) =>
                 setConfirmPassword(e.target.value)
@@ -112,16 +106,10 @@ function ResetPassword() {
             type="submit"
             className="auth-button"
           >
-            Modifier le mot de passe
+            Réinitialiser
           </button>
 
         </form>
-
-        <div className="auth-footer">
-          <a href="/login">
-            Retour à la connexion
-          </a>
-        </div>
 
       </div>
     </div>
