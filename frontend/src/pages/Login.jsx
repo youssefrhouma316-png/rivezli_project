@@ -112,7 +112,7 @@ function Login() {
             </form>
 
             <div className="auth-divider-text">
-              <span>Pas De Comte ?</span>
+              <span>Pas De Compte ?</span>
             </div>
 
             <button
