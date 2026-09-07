@@ -205,15 +205,15 @@ export const forgotPassword = async (req, res) => {
 
         try {
             await transporter.sendMail({
-                from: process.env.EMAIL_USER || "noreply@rivezli.tn",
+                from: process.env.EMAIL_USER ,
                 to: email,
                 subject: "Réinitialisation de votre mot de passe - Rivezli.tn",
                 text: `Votre code de réinitialisation est : ${code}. Ce code expire dans 10 minutes.`
             });
-            console.log(`✉️ Email de réinitialisation envoyé avec succès à ${email}`);
+            console.log(` Email de réinitialisation envoyé avec succès à ${email}`);
         } catch (emailError) {
-            console.error("⚠️ Impossible d'envoyer l'email via SMTP/Gmail (Erreur d'authentification) :", emailError.message);
-            console.log(`🔑 [MODE DEV/LOG] Code de réinitialisation généré pour ${email} : >>> ${code} <<<`);
+            console.error(" Impossible d'envoyer l'email via SMTP/Gmail (Erreur d'authentification) :", emailError.message);
+            console.log(` [MODE DEV/LOG] Code de réinitialisation généré pour ${email} : >>> ${code} <<<`);
         }
 
         return res.status(200).json({
